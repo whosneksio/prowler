@@ -263,7 +263,10 @@ impl Config {
         );
         migrate_delay(&mut cfg.instalock.delay_seconds, &mut cfg.instalock.delay);
         migrate_delay(&mut cfg.autoban.delay_seconds, &mut cfg.autoban.delay);
-        migrate_delay(&mut cfg.auto_accept.delay_seconds, &mut cfg.auto_accept.delay);
+        migrate_delay(
+            &mut cfg.auto_accept.delay_seconds,
+            &mut cfg.auto_accept.delay,
+        );
         cfg
     }
 
