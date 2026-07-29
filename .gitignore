@@ -15,6 +15,7 @@ dist-ssr
 # Rust / Tauri build output
 /src-tauri/target
 /src-tauri/gen/schemas
+/.worktrees/
 
 # Editor directories and files
 .vscode/*
