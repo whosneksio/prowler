@@ -1,6 +1,6 @@
 [package]
 name = "prowler"
-version = "0.1.0"
+version = "0.1.1"
 description = "Prowler"
 authors = ["jagudeczka"]
 edition = "2021"
