@@ -692,7 +692,7 @@ function RoleSpellPairs({
     const next: [string, string] = [...pair];
 
     if (spell === next[other]) next[other] = next[slot];
-    next[slot] = spell;z
+    next[slot] = spell;
     onChange({ ...value, [role]: next });
   };
 
