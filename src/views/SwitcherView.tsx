@@ -14,7 +14,13 @@ import { useLog } from "../lib/log";
 import { profileIconUrl } from "../lib/cdragon";
 import type { AccountMeta, ConnectionStatus } from "../lib/types";
 
-export function SwitcherView({ status }: { status: ConnectionStatus }) {
+export function SwitcherView({
+  status,
+  showUsername = true,
+}: {
+  status: ConnectionStatus;
+  showUsername?: boolean;
+}) {
   const { log } = useLog();
   const [accounts, setAccounts] = useState<AccountMeta[]>([]);
   const [saving, setSaving] = useState(false);
@@ -104,6 +110,7 @@ export function SwitcherView({ status }: { status: ConnectionStatus }) {
               isCurrent={!!currentPuuid && a.puuid === currentPuuid}
               switching={switchingId === a.id}
               switchDisabled={switchingId !== null}
+              blurIdentity={!showUsername}
               onSwitch={() => onSwitch(a)}
               onRename={(label) => onRename(a, label)}
               onDelete={() => onDelete(a)}
@@ -120,6 +127,7 @@ function AccountCard({
   isCurrent,
   switching,
   switchDisabled,
+  blurIdentity,
   onSwitch,
   onRename,
   onDelete,
@@ -128,6 +136,7 @@ function AccountCard({
   isCurrent: boolean;
   switching: boolean;
   switchDisabled: boolean;
+  blurIdentity: boolean;
   onSwitch: () => void;
   onRename: (label: string) => void;
   onDelete: () => void;
@@ -141,6 +150,11 @@ function AccountCard({
       ? `${account.gameName}#${account.tagLine}`
       : null;
 
+  const blurClass =
+    blurIdentity && !editing
+      ? "blur-sm transition-[filter] duration-200 group-hover:blur-none"
+      : "";
+
   function commitRename() {
     setEditing(false);
     const label = draft.trim();
@@ -150,8 +164,8 @@ function AccountCard({
 
   return (
     <div
-      className={`rounded-xl border bg-panel p-4 ${
-        isCurrent ? "border-primary" : "border-edge"
+      className={`group rounded-xl border bg-panel p-4 ${
+        isCurrent ? "border-primary/25" : "border-edge"
       }`}
     >
       <div className="flex items-center gap-3">
@@ -173,9 +187,11 @@ function AccountCard({
               className="h-7 px-2"
             />
           ) : (
-            <p className="truncate text-sm font-semibold">{account.label}</p>
+            <p className={`truncate text-sm font-semibold ${blurClass}`}>
+              {account.label}
+            </p>
           )}
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className={`mt-0.5 truncate text-xs text-muted-foreground ${blurClass}`}>
             {riotId ?? "Riot ID unknown"}
             {account.region ? ` · ${account.region.toUpperCase()}` : ""}
           </p>

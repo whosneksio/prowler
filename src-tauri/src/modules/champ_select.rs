@@ -42,6 +42,7 @@ struct RequestedLock {
 #[derive(Default)]
 struct SelectRuntime {
     first_seen: HashMap<i64, Instant>,
+    delays: HashMap<i64, Duration>,
     hovered: HashMap<i64, i64>,
     requested: HashMap<i64, RequestedLock>,
     confirmed: HashSet<i64>,
@@ -52,6 +53,7 @@ struct SelectRuntime {
 impl SelectRuntime {
     fn clear(&mut self) {
         self.first_seen.clear();
+        self.delays.clear();
         self.hovered.clear();
         self.requested.clear();
         self.confirmed.clear();
@@ -189,18 +191,18 @@ async fn handle_session(
         if rt.confirmed.contains(&a.id) {
             continue;
         }
-        let (module, verb, list, delay) = match a.kind.as_str() {
+        let (module, verb, list, delay_range) = match a.kind.as_str() {
             "pick" if cfg.instalock.enabled => (
                 "Instalock",
                 "locked",
                 &cfg.instalock.champions,
-                cfg.instalock.delay_seconds,
+                &cfg.instalock.delay,
             ),
             "ban" if cfg.autoban.enabled => (
                 "Autoban",
                 "banned",
                 &cfg.autoban.champions,
-                cfg.autoban.delay_seconds,
+                &cfg.autoban.delay,
             ),
             _ => continue,
         };
@@ -211,7 +213,12 @@ async fn handle_session(
 
         let now = Instant::now();
         let since = *rt.first_seen.entry(a.id).or_insert(now);
-        if now.duration_since(since) < Duration::from_secs_f64(delay.max(0.0)) {
+
+        let wait = *rt
+            .delays
+            .entry(a.id)
+            .or_insert_with(|| Duration::from_secs_f64(delay_range.sample()));
+        if now.duration_since(since) < wait {
             continue;
         }
 
@@ -436,6 +443,10 @@ pub fn parse_champion_summary(body: &Value) -> Vec<Champion> {
         .filter_map(|v| serde_json::from_value::<Champion>(v.clone()).ok())
         .filter(|c| c.id > 0)
         .collect();
+
+    list.sort_by(|a, b| a.id.cmp(&b.id));
+    let mut seen = HashSet::new();
+    list.retain(|c| seen.insert(c.name.to_lowercase()));
     list.sort_by(|a, b| a.name.cmp(&b.name));
     list
 }

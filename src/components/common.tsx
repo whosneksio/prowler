@@ -15,7 +15,7 @@ export function ViewHeader({
   subtitle,
   action,
 }: {
-  title: string;
+  title: ReactNode;
   subtitle?: string;
   action?: ReactNode;
 }) {
@@ -35,24 +35,38 @@ export function Card({
   desc,
   children,
   className,
+  contentClassName,
+  action,
 }: {
   title?: string;
   desc?: string;
   children?: ReactNode;
   className?: string;
+  contentClassName?: string;
+  action?: ReactNode;
 }) {
+  const hasHeader = title || desc || action;
   return (
     <UICard
       className={cn("gap-0 border-edge bg-panel p-5 shadow-none", className)}
     >
-      {(title || desc) && (
-        <CardHeader className="gap-1 p-0">
-          {title && <CardTitle className="text-sm">{title}</CardTitle>}
-          {desc && <CardDescription className="text-xs">{desc}</CardDescription>}
+      {hasHeader && (
+        <CardHeader className="gap-0 p-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="grid gap-1">
+              {title && <CardTitle className="text-sm">{title}</CardTitle>}
+              {desc && (
+                <CardDescription className="text-xs">{desc}</CardDescription>
+              )}
+            </div>
+            {action && <div className="shrink-0">{action}</div>}
+          </div>
         </CardHeader>
       )}
       {children && (
-        <CardContent className={`p-0 ${title || desc ? "mt-4" : ""}`}>
+        <CardContent
+          className={cn("p-0", hasHeader && "mt-4", contentClassName)}
+        >
           {children}
         </CardContent>
       )}

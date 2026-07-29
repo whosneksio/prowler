@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, ViewHeader } from "../components/common";
 import { Button } from "@/components/ui/button";
 import { countFriends, removeAllFriends, setChatOffline } from "../lib/ipc";
@@ -54,29 +54,34 @@ function OfflineCard() {
 function RemoveFriendsCard() {
   const { log } = useLog();
   const [busy, setBusy] = useState(false);
-  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function askConfirm() {
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+
+  function arm() {
+    setConfirming(true);
+    if (timer.current) clearTimeout(timer.current);
+
+    timer.current = setTimeout(() => setConfirming(false), 2000);
+  }
+
+  async function confirmRemove() {
+    if (timer.current) clearTimeout(timer.current);
+    setConfirming(false);
     setBusy(true);
     try {
       const n = await countFriends();
       if (n === 0) {
         log("Friends list is already empty.");
       } else {
-        setPendingCount(n);
+        await removeAllFriends();
+        log(`Removed ${n} friends.`, "success");
       }
-    } catch (e) {
-      log(`${e}`);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function confirmRemove() {
-    setBusy(true);
-    setPendingCount(null);
-    try {
-      await removeAllFriends();
     } catch (e) {
       log(`${e}`);
     } finally {
@@ -89,24 +94,14 @@ function RemoveFriendsCard() {
       title="Remove all friends"
       desc="Deletes every friend from your list. This cannot be undone."
     >
-      {pendingCount === null ? (
-        <Button size="sm" variant="destructive" disabled={busy} onClick={askConfirm}>
-          {busy ? "Working…" : "Remove all friends"}
-        </Button>
-      ) : (
-        <div className="flex items-center gap-3">
-          <span className="text-sm">
-            Delete <span className="font-semibold text-bad">{pendingCount}</span>{" "}
-            friends permanently?
-          </span>
-          <Button size="sm" variant="destructive" disabled={busy} onClick={confirmRemove}>
-            Yes, delete all
-          </Button>
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => setPendingCount(null)}>
-            Cancel
-          </Button>
-        </div>
-      )}
+      <Button
+        size="sm"
+        variant="destructive"
+        disabled={busy}
+        onClick={confirming ? confirmRemove : arm}
+      >
+        {busy ? "Working…" : confirming ? "Click again to confirm" : "Remove all friends"}
+      </Button>
     </Card>
   );
 }

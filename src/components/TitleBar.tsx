@@ -24,7 +24,7 @@ export function TitleBar() {
         <img src="/logo.png" alt="Prowler" className="h-5 w-5 rounded" />
         <span className="text-xs font-semibold tracking-tight text-foreground">
           Prowler
-          <span className="ml-1 text-muted-foreground">v0.1.0</span>
+          <span className="ml-1 text-muted-foreground">v0.1.1</span>
         </span>
       </div>
       <div className="flex h-full">

@@ -2,11 +2,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/*
- * Clean dark-neutral scheme
- * Canvas is darkest, panels sit one step lighter, borders are hairlines,
- * and the primary is near-white so actions carry the contrast.
- */
 :root {
   --radius: 0.5rem;
 
@@ -78,6 +73,11 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 

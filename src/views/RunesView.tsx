@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, ViewHeader } from "../components/common";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import {
   applyRunePage,
   getConfig,
@@ -127,6 +127,7 @@ export function RunesView() {
   const [data, setData] = useState<RuneData | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
+  const [dataPending, setDataPending] = useState(true);
   const dataLoaded = useRef(false);
 
   useEffect(() => {
@@ -142,7 +143,8 @@ export function RunesView() {
           dataLoaded.current = true;
           setData(d);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setDataPending(false));
     };
     load();
     onStatus((s) => {
@@ -229,28 +231,70 @@ export function RunesView() {
       )}
 
       <div className="grid max-w-xl gap-3">
-        {pages.length === 0 && (
+        {dataPending && pages.length > 0 ? (
+          pages.map((_, i) => <PageRowSkeleton key={i} />)
+        ) : pages.length === 0 ? (
           <Card>
             <p className="text-sm text-muted-foreground">
               No rune pages yet. Click “New page” to build one.
             </p>
           </Card>
+        ) : (
+          pages.map((page, i) => (
+            <PageRow
+              key={i}
+              page={page}
+              data={data}
+              busy={busy === i}
+              onApply={() => apply(page, i)}
+              onEdit={
+                data ? () => setDraft(draftFromPage(page, i, data)) : undefined
+              }
+              onDelete={() => savePages(pages.filter((_, j) => j !== i))}
+            />
+          ))
         )}
-        {pages.map((page, i) => (
-          <PageRow
-            key={i}
-            page={page}
-            data={data}
-            busy={busy === i}
-            onApply={() => apply(page, i)}
-            onEdit={
-              data ? () => setDraft(draftFromPage(page, i, data)) : undefined
-            }
-            onDelete={() => savePages(pages.filter((_, j) => j !== i))}
-          />
-        ))}
       </div>
     </div>
+  );
+}
+
+function RuneImg({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt?: string;
+  className?: string;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onLoad={() => setLoaded(true)}
+      className={cn(
+        "transition-opacity duration-300",
+        loaded ? "opacity-100" : "opacity-0",
+        className,
+      )}
+    />
+  );
+}
+
+function PageRowSkeleton() {
+  return (
+    <Card className="p-3">
+      <div className="flex items-center gap-3">
+        <div className="size-10 shrink-0 animate-pulse rounded-full bg-panel2" />
+        <div className="flex flex-1 flex-col gap-1.5">
+          <div className="h-3.5 w-2/5 animate-pulse rounded bg-panel2" />
+          <div className="h-2.5 w-1/4 animate-pulse rounded bg-panel2" />
+        </div>
+        <div className="h-8 w-16 animate-pulse rounded-md bg-panel2" />
+      </div>
+    </Card>
   );
 }
 
@@ -278,30 +322,41 @@ function PageRow({
     : undefined;
   const keystone =
     keystoneId != null ? data?.perks[String(keystoneId)] : undefined;
+  const accent = accentOf(page.primary_style_id);
+  const trees = [primary?.name, secondary?.name].filter(Boolean).join(" + ");
+
   return (
-    <Card className="p-3">
+    <Card className="group p-3 transition-colors hover:border-primary/30">
       <div className="flex items-center gap-3">
-        <div className="flex shrink-0 items-center gap-1.5">
-          {keystone?.icon ? (
-            <img
-              src={keystone.icon}
-              alt={keystone.name}
-              className="size-8 rounded-full"
-            />
-          ) : (
-            primary?.icon && (
-              <img src={primary.icon} alt={primary.name} className="size-7" />
-            )
-          )}
+        <div className="relative shrink-0">
+          <span
+            style={{ boxShadow: `0 0 0 1.5px ${accent}66` }}
+            className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-panel2"
+          >
+            {keystone?.icon ? (
+              <RuneImg
+                src={keystone.icon}
+                alt={keystone.name}
+                className="size-full"
+              />
+            ) : primary?.icon ? (
+              <RuneImg src={primary.icon} alt={primary.name} className="size-7" />
+            ) : null}
+          </span>
           {secondary?.icon && (
-            <img
-              src={secondary.icon}
-              alt={secondary.name}
-              className="size-4 opacity-70"
-            />
+            <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-panel ring-1 ring-edge">
+              <RuneImg src={secondary.icon} alt={secondary.name} className="size-4" />
+            </span>
           )}
         </div>
-        <p className="min-w-0 flex-1 truncate text-sm text-text">{page.name}</p>
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-text">{page.name}</p>
+          {trees && (
+            <p className="truncate text-xs text-muted-foreground">{trees}</p>
+          )}
+        </div>
+
         <Button size="sm" disabled={busy} onClick={onApply}>
           {busy ? "Applying…" : "Apply"}
         </Button>
@@ -313,8 +368,9 @@ function PageRow({
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 px-2 text-muted-foreground"
+          className="h-8 px-2 text-muted-foreground hover:text-destructive"
           onClick={onDelete}
+          title="Delete page"
         >
           ✕
         </Button>
@@ -421,6 +477,43 @@ function TreePicker({
   );
 }
 
+function HeaderName({
+  name,
+  onChange,
+}: {
+  name: string;
+  onChange: (v: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={name}
+        placeholder="Page name"
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => setEditing(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === "Escape") setEditing(false);
+        }}
+        className="w-56 border-b border-primary bg-transparent text-2xl font-medium tracking-tight text-text outline-none placeholder:text-muted-foreground"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      title="Click to rename"
+      onClick={() => setEditing(true)}
+      className="border-b border-dashed border-edge text-2xl font-medium tracking-tight text-muted-foreground transition-colors hover:text-text"
+    >
+      {name.trim() || "Untitled page"}
+    </button>
+  );
+}
+
 function RuneBuilder({
   draft,
   data,
@@ -471,10 +564,8 @@ function RuneBuilder({
       secondary = draft.secondary.map((s) =>
         s.row === row ? { row, perk: perkId } : s,
       );
-    } else if (draft.secondary.length < 2) {
-      secondary = [...draft.secondary, { row, perk: perkId }];
     } else {
-      return;
+      secondary = [...draft.secondary, { row, perk: perkId }].slice(-2);
     }
     onChange({ ...draft, secondary });
   }
@@ -493,7 +584,15 @@ function RuneBuilder({
   return (
     <div className="flex h-full flex-col overflow-y-auto">
       <ViewHeader
-        title={draft.index == null ? "New rune page" : "Edit rune page"}
+        title={
+          <span className="flex items-baseline gap-3">
+            <span>{draft.index == null ? "New rune page" : "Edit rune page"}</span>
+            <HeaderName
+              name={draft.name}
+              onChange={(name) => onChange({ ...draft, name })}
+            />
+          </span>
+        }
         action={
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" onClick={onCancel}>
@@ -507,16 +606,7 @@ function RuneBuilder({
       />
 
       <div className="grid max-w-5xl gap-4 md:grid-cols-2">
-        <Card title="Name" className="md:col-span-2">
-          <Input
-            placeholder="e.g. Lethality Jhin"
-            value={draft.name}
-            onChange={(e) => onChange({ ...draft, name: e.target.value })}
-            className="max-w-xs"
-          />
-        </Card>
-
-        <Card title="Primary tree" desc="Pick a keystone and one rune per row.">
+        <Card>
           <div className="grid gap-4">
             <TreePicker
               trees={data.trees}
@@ -525,9 +615,6 @@ function RuneBuilder({
             />
             {primaryTree && (
               <div className="grid gap-3">
-                <p className="text-center text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  Keystones
-                </p>
                 <RuneRow
                   perks={keystoneSlot(primaryTree).perks}
                   perk={perk}
@@ -552,10 +639,7 @@ function RuneBuilder({
           </div>
         </Card>
 
-        <Card
-          title="Secondary tree"
-          desc="Pick two runes from different rows."
-        >
+        <Card>
           <div className="grid gap-4">
             <TreePicker
               trees={data.trees}
@@ -581,25 +665,25 @@ function RuneBuilder({
                 ))}
               </div>
             )}
+            {data.shards.length > 0 && (
+              <>
+                <hr className="my-1 border-edge" />
+                <div className="grid gap-3">
+                  {data.shards.map((rowPerks, row) => (
+                    <RuneRow
+                      key={row}
+                      perks={rowPerks}
+                      perk={perk}
+                      variant="shard"
+                      isSelected={(id) => draft.shards[row] === id}
+                      onPick={(id) => setShard(row, id)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </Card>
-
-        {data.shards.length > 0 && (
-          <Card title="Stat shards" desc="Pick one per row." className="md:col-span-2">
-            <div className="grid gap-3">
-              {data.shards.map((rowPerks, row) => (
-                <RuneRow
-                  key={row}
-                  perks={rowPerks}
-                  perk={perk}
-                  variant="shard"
-                  isSelected={(id) => draft.shards[row] === id}
-                  onPick={(id) => setShard(row, id)}
-                />
-              ))}
-            </div>
-          </Card>
-        )}
       </div>
     </div>
   );

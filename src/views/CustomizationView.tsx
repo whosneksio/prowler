@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { Card, ViewHeader } from "../components/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { fetchSkins, profileIconUrl, type SkinInfo } from "../lib/cdragon";
 import {
   setBackground,
@@ -20,9 +22,11 @@ export function CustomizationView() {
         subtitle="Profile icon, background, badges, and status message."
       />
       <div className="grid max-w-3xl gap-4">
-        <IconCard />
+        <div className="grid gap-4 md:grid-cols-2">
+          <IconCard />
+          <BadgesCard />
+        </div>
         <StatusCard />
-        <BadgesCard />
         <BackgroundCard />
       </div>
     </div>
@@ -55,6 +59,7 @@ function IconCard() {
     <Card
       title="Icons"
       desc="Client-sided only chat icon."
+      contentClassName="flex flex-1 flex-col justify-end"
     >
       <div className="flex items-center gap-2">
         {valid ? (
@@ -76,7 +81,7 @@ function IconCard() {
           disabled={busy || !valid}
           onClick={() => run(() => setClientIcon(id))}
         >
-          Set client-side only
+          Set temporarily
         </Button>
       </div>
     </Card>
@@ -88,23 +93,27 @@ function StatusCard() {
   const [message, setMessage] = useState("");
 
   return (
-    <Card title="Status message" desc="Shown under your name in friends lists.">
-      <div className="flex items-center gap-2">
-        <Input
+    <Card title="Status message" desc="Shown under your name in friends lists. Multi-line and ASCII art work.">
+      <div className="grid gap-2">
+        <Textarea
           placeholder="Your status…"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1"
+          rows={8}
+          wrap="off"
+          className="whitespace-pre overflow-auto font-mono text-xs leading-tight"
         />
-        <Button size="sm"
-          disabled={busy}
-          onClick={() => run(() => setStatusMessage(message))}
-        >
-          Set
-        </Button>
-        <Button size="sm" variant="secondary" disabled={busy} onClick={() => run(() => setStatusMessage(""))}>
-          Clear
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm"
+            disabled={busy}
+            onClick={() => run(() => setStatusMessage(message))}
+          >
+            Set
+          </Button>
+          <Button size="sm" variant="secondary" disabled={busy} onClick={() => run(() => setStatusMessage(""))}>
+            Clear
+          </Button>
+        </div>
       </div>
     </Card>
   );
@@ -118,6 +127,7 @@ function BadgesCard() {
     <Card
       title="Profile badges"
       desc="Rearrange the challenge badges on your profile."
+      contentClassName="flex flex-1 flex-col justify-end"
     >
       <div className="flex gap-2">
         <Button size="sm" disabled={busy} onClick={() => apply("glitch")}>
@@ -173,28 +183,32 @@ function BackgroundCard() {
         </Button>
       ) : (
         <div>
-          <Input
-            placeholder="Search skins…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="mb-3 w-full"
-          />
-          <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
+          <div className="relative mb-3">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search skins…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full pl-8"
+            />
+          </div>
+          <div className="grid grid-cols-4 gap-2.5 md:grid-cols-6">
             {filtered.slice(0, limit).map((s) => (
               <button
                 key={s.id}
                 title={s.name}
                 disabled={busy}
                 onClick={() => run(() => setBackground(s.id))}
-                className="group overflow-hidden rounded-lg border border-edge transition-colors hover:border-primary disabled:opacity-50"
+                className="group relative aspect-square overflow-hidden rounded-lg border border-edge outline-none transition duration-200 hover:border-primary/70 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               >
                 <img
                   src={s.tileUrl}
                   alt={s.name}
                   loading="lazy"
-                  className="aspect-square w-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
                 />
-                <span className="block truncate px-1.5 py-1 text-[11px] text-muted-foreground group-hover:text-text">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+                <span className="absolute inset-x-0 bottom-0 truncate px-2 pb-1.5 pt-5 text-left text-[11px] font-medium text-white/95">
                   {s.name}
                 </span>
               </button>

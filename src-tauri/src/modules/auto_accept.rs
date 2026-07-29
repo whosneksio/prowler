@@ -45,7 +45,7 @@ async fn check(app: &AppHandle, state: &AppState, token: &CancellationToken) {
         return;
     }
 
-    let delay = state.config.read().await.auto_accept.delay_seconds;
+    let delay = state.config.read().await.auto_accept.delay.sample();
     tokio::select! {
         _ = token.cancelled() => return,
         _ = tokio::time::sleep(Duration::from_secs_f64(delay.max(0.0))) => {}

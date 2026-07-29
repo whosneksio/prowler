@@ -121,6 +121,10 @@ export function onStatus(cb: (s: ConnectionStatus) => void): Promise<UnlistenFn>
   return listen<ConnectionStatus>("lcu://status", (e) => cb(e.payload));
 }
 
+export function onConfig(cb: (c: Config) => void): Promise<UnlistenFn> {
+  return listen<Config>("prowler://config", (e) => cb(e.payload));
+}
+
 export function onLog(cb: (line: string) => void): Promise<UnlistenFn> {
   return listen<string>("prowler://log", (e) => cb(e.payload));
 }

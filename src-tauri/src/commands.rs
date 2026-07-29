@@ -20,6 +20,7 @@ pub struct ConnectionStatus {
     pub connected: bool,
     pub summoner: Option<CurrentSummoner>,
     pub phase: Option<String>,
+    pub region: Option<String>,
 }
 
 async fn fetch_status(state: &AppState) -> ConnectionStatus {
@@ -34,10 +35,22 @@ async fn fetch_status(state: &AppState) -> ConnectionStatus {
                 .await
                 .ok()
                 .and_then(|r| r.body.as_str().map(|s| s.to_string()));
+            let region = state
+                .lcu(Method::GET, "/riotclient/region-locale", None)
+                .await
+                .ok()
+                .and_then(|r| {
+                    r.body
+                        .get("region")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string())
+                })
+                .filter(|s| !s.is_empty());
             ConnectionStatus {
                 connected: true,
                 summoner: Some(summoner),
                 phase,
+                region,
             }
         }
         _ => {
@@ -73,6 +86,7 @@ pub async fn set_config(
     state: tauri::State<'_, Arc<AppState>>,
     config: Config,
 ) -> Result<(), String> {
+    let _ = app.emit("prowler://config", &config);
     *state.config.write().await = config;
     state.persist_config().await;
     crate::automations::sync(&app, &state).await;

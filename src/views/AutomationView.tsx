@@ -3,7 +3,6 @@ import {
   Ban,
   Check,
   Dices,
-  Gem,
   Search,
   Sparkles,
   X,
@@ -54,17 +53,11 @@ const ROLE_TABS: { key: RoleKey; label: string }[] = [
 
 const MAX_PRIORITY = 5;
 
-type AutoTab =
-  | "instalock"
-  | "autoban"
-  | "auto_runes"
-  | "auto_spells"
-  | "auto_accept";
+type AutoTab = "instalock" | "autoban" | "auto_spells" | "auto_accept";
 
 const AUTOMATION_TABS: { key: AutoTab; label: string; icon: LucideIcon }[] = [
   { key: "instalock", label: "Instalock", icon: Zap },
   { key: "autoban", label: "Autoban", icon: Ban },
-  { key: "auto_runes", label: "Runes", icon: Gem },
   { key: "auto_spells", label: "Summoners", icon: Sparkles },
   { key: "auto_accept", label: "Accept", icon: Check },
 ];
@@ -101,7 +94,16 @@ export function AutomationView() {
       listChampions()
         .then((list) => {
           championsLoaded.current = true;
-          setChampions(list);
+
+          const seen = new Set<string>();
+          setChampions(
+            list.filter((c) => {
+              const key = c.name.toLowerCase();
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            }),
+          );
         })
         .catch(() => {});
     };
@@ -143,7 +145,6 @@ export function AutomationView() {
     const enabled: Record<AutoTab, boolean> = {
       instalock: config.instalock.enabled,
       autoban: config.autoban.enabled,
-      auto_runes: config.auto_runes.enabled,
       auto_spells: config.auto_spells.enabled,
       auto_accept: config.auto_accept.enabled,
     };
@@ -165,22 +166,19 @@ export function AutomationView() {
             <Card
               title="Instalock"
               desc="Lock your assigned role's champion; falls back down the list."
+              action={
+                <Switch
+                  checked={config.instalock.enabled}
+                  onCheckedChange={(on) =>
+                    toggle("instalock", on, {
+                      ...config,
+                      instalock: { ...config.instalock, enabled: on },
+                    })
+                  }
+                />
+              }
             >
               <div className="grid gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Per-role priority lists
-                  </span>
-                  <Switch
-                    checked={config.instalock.enabled}
-                    onCheckedChange={(on) =>
-                      toggle("instalock", on, {
-                        ...config,
-                        instalock: { ...config.instalock, enabled: on },
-                      })
-                    }
-                  />
-                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
                     Prepick - hover it during the ban phase
@@ -191,6 +189,20 @@ export function AutomationView() {
                       toggle("prepick", on, {
                         ...config,
                         instalock: { ...config.instalock, prepick: on },
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Auto Runes - apply the recommended page after lock-in
+                  </span>
+                  <Switch
+                    checked={config.auto_runes.enabled}
+                    onCheckedChange={(on) =>
+                      toggle("auto_runes", on, {
+                        ...config,
+                        auto_runes: { ...config.auto_runes, enabled: on },
                       })
                     }
                   />
@@ -215,22 +227,19 @@ export function AutomationView() {
             <Card
               title="Autoban"
               desc="Ban your assigned role's target; skips champions teammates hover."
+              action={
+                <Switch
+                  checked={config.autoban.enabled}
+                  onCheckedChange={(on) =>
+                    toggle("autoban", on, {
+                      ...config,
+                      autoban: { ...config.autoban, enabled: on },
+                    })
+                  }
+                />
+              }
             >
               <div className="grid gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Per-role priority lists
-                  </span>
-                  <Switch
-                    checked={config.autoban.enabled}
-                    onCheckedChange={(on) =>
-                      toggle("autoban", on, {
-                        ...config,
-                        autoban: { ...config.autoban, enabled: on },
-                      })
-                    }
-                  />
-                </div>
                 <RoleChampionLists
                   value={config.autoban.champions}
                   champions={champions}
@@ -247,48 +256,23 @@ export function AutomationView() {
             </Card>
           )}
 
-          {tab === "auto_runes" && (
-            <Card
-              title="Auto Runes"
-              desc="Apply the client's recommended rune page for your champion and role after you lock in."
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Writes to a reusable page named "Prowler".
-                </span>
-                <Switch
-                  checked={config.auto_runes.enabled}
-                  onCheckedChange={(on) =>
-                    toggle("auto_runes", on, {
-                      ...config,
-                      auto_runes: { ...config.auto_runes, enabled: on },
-                    })
-                  }
-                />
-              </div>
-            </Card>
-          )}
-
           {tab === "auto_spells" && (
             <Card
               title="Auto Summoners"
               desc="Set your summoner spells for the assigned role after you lock in."
+              action={
+                <Switch
+                  checked={config.auto_spells.enabled}
+                  onCheckedChange={(on) =>
+                    toggle("auto_spells", on, {
+                      ...config,
+                      auto_spells: { ...config.auto_spells, enabled: on },
+                    })
+                  }
+                />
+              }
             >
               <div className="grid gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Per-role spell pairs
-                  </span>
-                  <Switch
-                    checked={config.auto_spells.enabled}
-                    onCheckedChange={(on) =>
-                      toggle("auto_spells", on, {
-                        ...config,
-                        auto_spells: { ...config.auto_spells, enabled: on },
-                      })
-                    }
-                  />
-                </div>
                 <RoleSpellPairs
                   value={config.auto_spells.roles}
                   onChange={(roles) =>
@@ -309,7 +293,8 @@ export function AutomationView() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  Delay: {config.auto_accept.delay_seconds.toFixed(1)}s
+                  Delay: {config.auto_accept.delay.min.toFixed(1)}–
+                  {config.auto_accept.delay.max.toFixed(1)}s
                 </span>
                 <Switch
                   checked={config.auto_accept.enabled}
@@ -341,7 +326,7 @@ function SegmentedTabs<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div className="inline-flex gap-1 rounded-lg border border-edge bg-background p-1">
+    <div className="flex w-full gap-1 rounded-lg border border-edge bg-background p-1">
       {items.map((item) => {
         const active = item.key === value;
         const Icon = item.icon;
@@ -351,7 +336,7 @@ function SegmentedTabs<T extends string>({
             type="button"
             onClick={() => onSelect(item.key)}
             className={cn(
-              "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors",
+              "inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors",
               size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
               active
                 ? "bg-panel2 text-text shadow-sm"
@@ -577,17 +562,20 @@ function PriorityTiles({
 
   return (
     <div className="grid gap-2">
-      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-        Priority
-      </span>
       <div className="flex flex-wrap gap-2">
         {list.map((name, i) => (
           <div
             key={name}
             draggable
-            onDragStart={() => setDragIndex(i)}
+            onDragStart={(e) => {
+              setDragIndex(i);
+
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", String(i));
+            }}
             onDragOver={(e) => {
               e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
               setOverIndex(i);
             }}
             onDrop={(e) => {
@@ -611,16 +599,16 @@ function PriorityTiles({
             )}
           >
             <ChampionIcon name={name} id={idOf(name)} size={44} />
-            <span className="absolute -left-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+            <span className="absolute -left-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground ring-2 ring-panel">
               {i + 1}
             </span>
             <button
               type="button"
               onClick={() => onRemove(i)}
               title={`Remove ${name}`}
-              className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition group-hover:opacity-100"
+              className="absolute -bottom-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 ring-2 ring-panel transition group-hover:opacity-100"
             >
-              <X className="size-3" />
+              <X className="size-2.5" strokeWidth={3} />
             </button>
           </div>
         ))}
@@ -679,6 +667,7 @@ function ChampionIcon({
       alt={name}
       title={name}
       loading="lazy"
+      draggable={false}
       style={box}
       onError={() => setFailed(true)}
       className={cn("rounded-md object-cover", className)}
@@ -696,9 +685,14 @@ function RoleSpellPairs({
   const [role, setRole] = useState<RoleKey>("default");
   const [icons, setIcons] = useState<Map<number, string>>(new Map());
   const pair = value[role];
+
+  const forceSmite = role === "jungle";
   const set = (slot: 0 | 1, spell: string) => {
+    const other = slot === 0 ? 1 : 0;
     const next: [string, string] = [...pair];
-    next[slot] = spell;
+
+    if (spell === next[other]) next[other] = next[slot];
+    next[slot] = spell;z
     onChange({ ...value, [role]: next });
   };
 
@@ -706,36 +700,59 @@ function RoleSpellPairs({
     fetchSummonerSpellIcons().then(setIcons).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!forceSmite) return;
+    if (pair[1] === "Smite" && pair[0] !== "Smite") return;
+    const keep = pair[0] !== "Smite" ? pair[0] : pair[1] !== "Smite" ? pair[1] : "Flash";
+    onChange({ ...value, jungle: [keep, "Smite"] });
+  }, [forceSmite, pair, value, onChange]);
+
   const iconFor = (name: string) => icons.get(SPELL_ID[name] ?? -1);
 
   return (
     <div className="grid gap-2">
       <RoleTabs role={role} onSelect={setRole} marked={() => false} />
       <div className="flex items-center gap-2">
-        {([0, 1] as const).map((slot) => (
-          <label
-            key={slot}
-            className="flex flex-1 items-center gap-2 text-xs text-muted-foreground"
-          >
-            {slot === 0 ? "D" : "F"}
-            <Select value={pair[slot]} onValueChange={(v) => set(slot, v)}>
-              <SelectTrigger size="sm" className="min-w-0 flex-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SUMMONER_SPELLS.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    <span className="flex items-center gap-2">
-                      <SpellIcon name={s} url={iconFor(s)} />
-                      {s}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
-        ))}
+        {([0, 1] as const).map((slot) => {
+          const locked = forceSmite && slot === 1;
+          return (
+            <label
+              key={slot}
+              className="flex flex-1 items-center gap-2 text-xs text-muted-foreground"
+            >
+              {slot === 0 ? "D" : "F"}
+              <Select
+                value={pair[slot]}
+                disabled={locked}
+                onValueChange={(v) => set(slot, v)}
+              >
+                <SelectTrigger size="sm" className="min-w-0 flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUMMONER_SPELLS.map((s) => (
+                    <SelectItem
+                      key={s}
+                      value={s}
+                      disabled={forceSmite && slot === 0 && s === "Smite"}
+                    >
+                      <span className="flex items-center gap-2">
+                        <SpellIcon name={s} url={iconFor(s)} />
+                        {s}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+          );
+        })}
       </div>
+      {forceSmite && (
+        <p className="text-xs text-muted-foreground">
+          Smite is locked for Jungle.
+        </p>
+      )}
     </div>
   );
 }

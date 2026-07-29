@@ -13,6 +13,7 @@ export interface ConnectionStatus {
   connected: boolean;
   summoner: CurrentSummoner | null;
   phase: string | null;
+  region: string | null;
 }
 
 export interface RoleChampions {
@@ -35,17 +36,22 @@ export interface RoleSpells {
   utility: [string, string];
 }
 
+export interface DelayRange {
+  min: number;
+  max: number;
+}
+
 export interface InstalockCfg {
   enabled: boolean;
   prepick: boolean;
   champions: RoleChampions;
-  delay_seconds: number;
+  delay: DelayRange;
 }
 
 export interface AutobanCfg {
   enabled: boolean;
   champions: RoleChampions;
-  delay_seconds: number;
+  delay: DelayRange;
 }
 
 export interface AutoRunesCfg {
@@ -95,11 +101,15 @@ export interface RuneData {
 
 export interface AutoAcceptCfg {
   enabled: boolean;
-  delay_seconds: number;
+  delay: DelayRange;
 }
 
 export interface LobbyRevealCfg {
   provider: string;
+}
+
+export interface UiCfg {
+  show_username: boolean;
 }
 
 export interface Config {
@@ -110,6 +120,7 @@ export interface Config {
   auto_runes: AutoRunesCfg;
   auto_spells: AutoSpellsCfg;
   custom_runes: CustomRunesCfg;
+  ui: UiCfg;
 }
 
 export interface ChampionInfo {

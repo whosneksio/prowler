@@ -30,6 +30,33 @@ impl RoleChampions {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(default)]
+pub struct DelayRange {
+    pub min: f64,
+    pub max: f64,
+}
+
+impl DelayRange {
+    pub fn fixed(v: f64) -> Self {
+        Self { min: v, max: v }
+    }
+
+    pub fn sample(&self) -> f64 {
+        let lo = self.min.max(0.0);
+        let hi = self.max.max(lo);
+        if hi <= lo {
+            return lo;
+        }
+        let frac = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .subsec_nanos() as f64
+            / 1_000_000_000.0;
+        lo + frac * (hi - lo)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct InstalockCfg {
@@ -38,7 +65,10 @@ pub struct InstalockCfg {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub champion: Option<String>,
     pub champions: RoleChampions,
-    pub delay_seconds: f64,
+    pub delay: DelayRange,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delay_seconds: Option<f64>,
 }
 
 impl Default for InstalockCfg {
@@ -51,7 +81,8 @@ impl Default for InstalockCfg {
                 default: vec!["Random".into()],
                 ..RoleChampions::default()
             },
-            delay_seconds: 0.3,
+            delay: DelayRange::fixed(0.3),
+            delay_seconds: None,
         }
     }
 }
@@ -63,7 +94,10 @@ pub struct AutobanCfg {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub champion: Option<String>,
     pub champions: RoleChampions,
-    pub delay_seconds: f64,
+    pub delay: DelayRange,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delay_seconds: Option<f64>,
 }
 
 impl Default for AutobanCfg {
@@ -72,22 +106,28 @@ impl Default for AutobanCfg {
             enabled: false,
             champion: None,
             champions: RoleChampions::default(),
-            delay_seconds: 0.3,
+            delay: DelayRange::fixed(0.3),
+            delay_seconds: None,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct AutoAcceptCfg {
     pub enabled: bool,
-    pub delay_seconds: f64,
+    pub delay: DelayRange,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delay_seconds: Option<f64>,
 }
 
 impl Default for AutoAcceptCfg {
     fn default() -> Self {
         Self {
             enabled: false,
-            delay_seconds: 0.0,
+            delay: DelayRange::fixed(0.0),
+            delay_seconds: None,
         }
     }
 }
@@ -171,6 +211,20 @@ pub struct CustomRunesCfg {
     pub pages: Vec<RunePage>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(default)]
+pub struct UiCfg {
+    pub show_username: bool,
+}
+
+impl Default for UiCfg {
+    fn default() -> Self {
+        Self {
+            show_username: true,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Config {
     #[serde(default)]
@@ -187,6 +241,8 @@ pub struct Config {
     pub auto_spells: AutoSpellsCfg,
     #[serde(default)]
     pub custom_runes: CustomRunesCfg,
+    #[serde(default)]
+    pub ui: UiCfg,
 }
 
 impl Config {
@@ -205,6 +261,9 @@ impl Config {
             &mut cfg.autoban.champions,
             &AutobanCfg::default().champions,
         );
+        migrate_delay(&mut cfg.instalock.delay_seconds, &mut cfg.instalock.delay);
+        migrate_delay(&mut cfg.autoban.delay_seconds, &mut cfg.autoban.delay);
+        migrate_delay(&mut cfg.auto_accept.delay_seconds, &mut cfg.auto_accept.delay);
         cfg
     }
 
@@ -214,6 +273,12 @@ impl Config {
         }
         let json = serde_json::to_string_pretty(self).unwrap_or_else(|_| "{}".into());
         std::fs::write(path, json)
+    }
+}
+
+fn migrate_delay(legacy: &mut Option<f64>, delay: &mut DelayRange) {
+    if let Some(v) = legacy.take() {
+        *delay = DelayRange::fixed(v);
     }
 }
 
@@ -272,9 +337,12 @@ mod tests {
             &mut cfg.autoban.champions,
             &AutobanCfg::default().champions,
         );
+        migrate_delay(&mut cfg.instalock.delay_seconds, &mut cfg.instalock.delay);
+        migrate_delay(&mut cfg.autoban.delay_seconds, &mut cfg.autoban.delay);
 
         assert!(cfg.instalock.enabled);
-        assert_eq!(cfg.instalock.delay_seconds, 0.5);
+        assert_eq!(cfg.instalock.delay, DelayRange::fixed(0.5));
+        assert!(cfg.instalock.delay_seconds.is_none());
         assert_eq!(cfg.instalock.champions.default, vec!["Ahri".to_string()]);
         assert!(cfg.instalock.champion.is_none());
 
