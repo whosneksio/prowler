@@ -4,6 +4,9 @@
 
 Prowler is a lightweight desktop tool for League of Legends built with Tauri and React, designed to enhance your experience in League of Legends client. Heavily inspired by: [Tiamat](https://github.com/369gabriel/tiamat)
 
+> [!WARNING]
+> **Use at your own risk.** Prowler is not affiliated with, endorsed, or sponsored by Riot Games. Using third-party tools may violate Riot's Terms of Service and could result in penalties, including account bans. You are solely responsible for any consequences of using this software.
+
 ## Features
 
 - **Account Switcher**: Securely save multiple Riot account sessions and switch between them with a single click. No more typing passwords.
