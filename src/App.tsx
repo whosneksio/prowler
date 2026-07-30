@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
 import { TitleBar } from "./components/TitleBar";
@@ -96,6 +97,22 @@ function Shell() {
     });
   }
 
+  function acceptRisk() {
+    if (!config) return;
+    const next = { ...config, ui: { ...config.ui, risk_accepted: true } };
+    setConfigLocal(next);
+    setConfig(next).catch((e) => log(`Failed to save config: ${e}`));
+  }
+
+  if (config && !config.ui.risk_accepted) {
+    return (
+      <div className="flex h-screen flex-col">
+        <TitleBar />
+        <RiskGate onAccept={acceptRisk} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen flex-col">
       <TitleBar />
@@ -136,6 +153,21 @@ function Shell() {
         </div>
       </div>
       <LogFeed />
+    </div>
+  );
+}
+
+function RiskGate({ onAccept }: { onAccept: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="text-lg font-semibold">Use at your own risk</p>
+      <p className="max-w-md text-sm text-muted-foreground">
+        Prowler is not affiliated with, endorsed, or sponsored by Riot Games.
+        Using third-party tools may violate Riot's Terms of Service and could
+        result in penalties, including account bans. You are solely responsible
+        for any consequences of using this software.
+      </p>
+      <Button onClick={onAccept}>I understand and accept the risk</Button>
     </div>
   );
 }

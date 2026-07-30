@@ -216,6 +216,7 @@ pub struct CustomRunesCfg {
 pub struct UiCfg {
     pub show_username: bool,
     pub close_to_tray: bool,
+    pub risk_accepted: bool,
 }
 
 impl Default for UiCfg {
@@ -223,6 +224,7 @@ impl Default for UiCfg {
         Self {
             show_username: true,
             close_to_tray: true,
+            risk_accepted: false,
         }
     }
 }

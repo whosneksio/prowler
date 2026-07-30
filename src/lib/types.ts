@@ -111,6 +111,7 @@ export interface LobbyRevealCfg {
 export interface UiCfg {
   show_username: boolean;
   close_to_tray: boolean;
+  risk_accepted: boolean;
 }
 
 export interface UpdatesCfg {

@@ -40,6 +40,16 @@ Prowler is a lightweight desktop tool for League of Legends built with Tauri and
 2.  Download the `.msi` installer for the latest version.
 3.  Run the installer and follow the on-screen instructions.
 
+### Verifying releases
+
+Every release is built by [GitHub Actions](.github/workflows/release.yml) from the public source code, with cryptographic build provenance. To verify that a downloaded installer was built from this repository (requires the [GitHub CLI](https://cli.github.com/)):
+
+```sh
+gh attestation verify Prowler_X.Y.Z_x64_en-US.msi --repo whosneksio/prowler
+```
+
+A successful verification names this repository, the release workflow, and the exact commit the installer was built from. All attestations are also listed at [github.com/whosneksio/prowler/attestations](https://github.com/whosneksio/prowler/attestations).
+
 To use the Account Switcher:
 1.  Log in to the Riot Client with the **“Stay signed in”** option checked.
 2.  In Prowler, navigate to the **Accounts** view.
@@ -71,3 +81,4 @@ To build Prowler yourself, you'll need to have [Rust](https://www.rust-lang.org/
     This will create a production-ready executable and installer in `src-tauri/target/release/bundle/`.
     ```sh
     bun run tauri build
+    ```
