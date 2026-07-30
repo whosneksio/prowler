@@ -110,6 +110,7 @@ export interface LobbyRevealCfg {
 
 export interface UiCfg {
   show_username: boolean;
+  close_to_tray: boolean;
 }
 
 export interface UpdatesCfg {

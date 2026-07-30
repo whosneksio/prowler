@@ -5,6 +5,7 @@ mod lcu;
 mod modules;
 mod state;
 mod switcher;
+mod tray;
 mod updater;
 
 use std::sync::Arc;
@@ -19,6 +20,28 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let app = window.app_handle();
+                let state = app.state::<Arc<AppState>>();
+
+                let close_to_tray = state
+                    .config
+                    .try_read()
+                    .map(|c| c.ui.close_to_tray)
+                    .unwrap_or(true);
+                if close_to_tray {
+                    api.prevent_close();
+                    let win = window.clone();
+
+                    tauri::async_runtime::spawn(async move {
+                        let _ = win.destroy();
+                    });
+                } else {
+                    app.exit(0);
+                }
+            }
+        })
         .setup(|app| {
             let config_dir = app
                 .path()
@@ -55,6 +78,7 @@ pub fn run() {
 
             #[cfg(desktop)]
             {
+                tray::create_tray(app.handle())?;
                 app.handle()
                     .plugin(tauri_plugin_updater::Builder::new().build())?;
                 app.manage(updater::PendingUpdate(tokio::sync::Mutex::new(None)));
@@ -94,6 +118,11 @@ pub fn run() {
             updater::check_update,
             updater::install_update,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app, event| {
+            if let tauri::RunEvent::ExitRequested { code: None, api, .. } = event {
+                api.prevent_exit();
+            }
+        });
 }

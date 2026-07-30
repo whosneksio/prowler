@@ -215,12 +215,14 @@ pub struct CustomRunesCfg {
 #[serde(default)]
 pub struct UiCfg {
     pub show_username: bool,
+    pub close_to_tray: bool,
 }
 
 impl Default for UiCfg {
     fn default() -> Self {
         Self {
             show_username: true,
+            close_to_tray: true,
         }
     }
 }
@@ -386,5 +388,6 @@ mod tests {
         assert_eq!(cfg.instalock.champions.default, vec!["Random".to_string()]);
         assert!(cfg.updates.auto_check);
         assert!(cfg.updates.skipped_version.is_none());
+        assert!(cfg.ui.close_to_tray);
     }
 }

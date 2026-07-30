@@ -5,6 +5,29 @@
     <link rel="icon" type="image/svg+xml" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Prowler</title>
+    <style>
+      html {
+        background: #09090b;
+      }
+      #root:empty::after {
+        content: "";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 24px;
+        height: 24px;
+        margin: -12px 0 0 -12px;
+        border: 2px solid #232327;
+        border-top-color: #85858d;
+        border-radius: 50%;
+        animation: prowler-spin 0.7s linear infinite;
+      }
+      @keyframes prowler-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
 
   <body>

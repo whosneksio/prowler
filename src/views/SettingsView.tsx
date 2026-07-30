@@ -64,6 +64,23 @@ export function SettingsView() {
         </Card>
 
         <Card
+          title="Window"
+          desc="Closing the window keeps Prowler running in the tray."
+        >
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm text-muted-foreground">
+              Close to tray
+            </span>
+            <Switch
+              checked={config.ui.close_to_tray}
+              onCheckedChange={(on) =>
+                save({ ...config, ui: { ...config.ui, close_to_tray: on } })
+              }
+            />
+          </div>
+        </Card>
+
+        <Card
           title="Lobby Reveal"
           desc="Which site opens when you reveal a lobby."
           className="opacity-50"

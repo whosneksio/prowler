@@ -17,6 +17,8 @@ dist-ssr
 /src-tauri/gen/schemas
 /.worktrees/
 
+/.claude/
+
 # Updater signing keys
 *.key
 

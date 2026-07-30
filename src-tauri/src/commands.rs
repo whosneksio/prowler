@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use reqwest::Method;
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::config::Config;
 use crate::lcu::models::CurrentSummoner;
@@ -61,9 +61,24 @@ async fn fetch_status(state: &AppState) -> ConnectionStatus {
 }
 
 pub async fn connection_monitor(app: AppHandle, state: Arc<AppState>) {
+    let mut tray_connected: Option<bool> = None;
     loop {
         let status = fetch_status(&state).await;
         let _ = app.emit("lcu://status", &status);
+
+        if tray_connected != Some(status.connected) {
+            tray_connected = Some(status.connected);
+            if let Some(tray) = app.try_state::<crate::tray::TrayHandles>() {
+                let text = if status.connected {
+                    "League: Connected"
+                } else {
+                    "League: Disconnected"
+                };
+                let _ = tray.status.set_text(text);
+                let _ = tray.tray.set_tooltip(Some(format!("Prowler — {text}")));
+            }
+        }
+
         tokio::time::sleep(Duration::from_millis(1500)).await;
     }
 }
