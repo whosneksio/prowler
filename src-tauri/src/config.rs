@@ -225,6 +225,23 @@ impl Default for UiCfg {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(default)]
+pub struct UpdatesCfg {
+    pub auto_check: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skipped_version: Option<String>,
+}
+
+impl Default for UpdatesCfg {
+    fn default() -> Self {
+        Self {
+            auto_check: true,
+            skipped_version: None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Config {
     #[serde(default)]
@@ -243,6 +260,8 @@ pub struct Config {
     pub custom_runes: CustomRunesCfg,
     #[serde(default)]
     pub ui: UiCfg,
+    #[serde(default)]
+    pub updates: UpdatesCfg,
 }
 
 impl Config {
@@ -365,5 +384,7 @@ mod tests {
         assert!(!cfg.auto_spells.enabled);
         assert_eq!(cfg.auto_spells.roles.for_role(Some("JUNGLE"))[1], "Smite");
         assert_eq!(cfg.instalock.champions.default, vec!["Random".to_string()]);
+        assert!(cfg.updates.auto_check);
+        assert!(cfg.updates.skipped_version.is_none());
     }
 }

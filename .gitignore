@@ -17,6 +17,9 @@ dist-ssr
 /src-tauri/gen/schemas
 /.worktrees/
 
+# Updater signing keys
+*.key
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -5,6 +5,7 @@ mod lcu;
 mod modules;
 mod state;
 mod switcher;
+mod updater;
 
 use std::sync::Arc;
 
@@ -47,9 +48,21 @@ pub fn run() {
             });
 
             let handle = app.handle().clone();
+            let automations_state = state.clone();
             tauri::async_runtime::spawn(async move {
-                automations::sync(&handle, &state).await;
+                automations::sync(&handle, &automations_state).await;
             });
+
+            #[cfg(desktop)]
+            {
+                app.handle()
+                    .plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.manage(updater::PendingUpdate(tokio::sync::Mutex::new(None)));
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    updater::auto_check(handle, state).await;
+                });
+            }
 
             Ok(())
         })
@@ -78,6 +91,8 @@ pub fn run() {
             modules::friends::remove_all_friends,
             modules::runes::get_rune_trees,
             modules::runes::apply_rune_page,
+            updater::check_update,
+            updater::install_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

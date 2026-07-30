@@ -112,6 +112,23 @@ export interface UiCfg {
   show_username: boolean;
 }
 
+export interface UpdatesCfg {
+  auto_check: boolean;
+  skipped_version?: string | null;
+}
+
+export interface UpdateInfo {
+  version: string;
+  current_version: string;
+  notes: string | null;
+  date: string | null;
+}
+
+export interface UpdateProgress {
+  downloaded: number;
+  total: number | null;
+}
+
 export interface Config {
   instalock: InstalockCfg;
   autoban: AutobanCfg;
@@ -121,6 +138,7 @@ export interface Config {
   auto_spells: AutoSpellsCfg;
   custom_runes: CustomRunesCfg;
   ui: UiCfg;
+  updates: UpdatesCfg;
 }
 
 export interface ChampionInfo {

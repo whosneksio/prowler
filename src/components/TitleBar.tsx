@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, Square, X } from "lucide-react";
 
@@ -6,12 +7,14 @@ const appWindow = getCurrentWindow();
 
 export function TitleBar() {
   const [maximized, setMaximized] = useState(false);
+  const [version, setVersion] = useState("");
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     const sync = () => appWindow.isMaximized().then(setMaximized).catch(() => {});
     sync();
     appWindow.onResized(sync).then((fn) => (unlisten = fn));
+    getVersion().then(setVersion).catch(() => {});
     return () => unlisten?.();
   }, []);
 
@@ -24,7 +27,7 @@ export function TitleBar() {
         <img src="/logo.png" alt="Prowler" className="h-5 w-5 rounded" />
         <span className="text-xs font-semibold tracking-tight text-foreground">
           Prowler
-          <span className="ml-1 text-muted-foreground">v0.1.1</span>
+          <span className="ml-1 text-muted-foreground">{version && `v${version}`}</span>
         </span>
       </div>
       <div className="flex h-full">

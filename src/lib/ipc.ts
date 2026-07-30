@@ -8,6 +8,8 @@ import type {
   ConnectionStatus,
   RuneData,
   RunePage,
+  UpdateInfo,
+  UpdateProgress,
 } from "./types";
 
 export function getConnectionStatus(): Promise<ConnectionStatus> {
@@ -127,4 +129,26 @@ export function onConfig(cb: (c: Config) => void): Promise<UnlistenFn> {
 
 export function onLog(cb: (line: string) => void): Promise<UnlistenFn> {
   return listen<string>("prowler://log", (e) => cb(e.payload));
+}
+
+export function checkUpdate(): Promise<UpdateInfo | null> {
+  return invoke("check_update");
+}
+
+export function installUpdate(): Promise<void> {
+  return invoke("install_update");
+}
+
+export function onUpdate(
+  cb: (info: UpdateInfo | null) => void,
+): Promise<UnlistenFn> {
+  return listen<UpdateInfo | null>("prowler://update", (e) => cb(e.payload));
+}
+
+export function onUpdateProgress(
+  cb: (p: UpdateProgress) => void,
+): Promise<UnlistenFn> {
+  return listen<UpdateProgress>("prowler://update-progress", (e) =>
+    cb(e.payload),
+  );
 }

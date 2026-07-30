@@ -4,9 +4,25 @@ import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
 import { TitleBar } from "./components/TitleBar";
 import { LogFeed } from "./components/LogFeed";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { LogProvider, useLog } from "./lib/log";
-import { getConfig, getConnectionStatus, onConfig, onStatus } from "./lib/ipc";
-import type { Config, ConnectionStatus, ViewId } from "./lib/types";
+import {
+  getConfig,
+  getConnectionStatus,
+  installUpdate,
+  onConfig,
+  onStatus,
+  onUpdate,
+  onUpdateProgress,
+  setConfig,
+} from "./lib/ipc";
+import type {
+  Config,
+  ConnectionStatus,
+  UpdateInfo,
+  UpdateProgress,
+  ViewId,
+} from "./lib/types";
 import { SwitcherView } from "./views/SwitcherView";
 import { AutomationView } from "./views/AutomationView";
 import { CustomizationView } from "./views/CustomizationView";
@@ -24,14 +40,16 @@ function Shell() {
     phase: null,
     region: null,
   });
-  const [showUsername, setShowUsername] = useState(true);
+  const [config, setConfigLocal] = useState<Config | null>(null);
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const [progress, setProgress] = useState<UpdateProgress | null>(null);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     let prevConnected: boolean | null = null;
     getConnectionStatus().then(setStatus).catch(() => {});
-    getConfig()
-      .then((c) => setShowUsername(c.ui.show_username))
-      .catch(() => {});
+    getConfig().then(setConfigLocal).catch(() => {});
     const un = onStatus((s) => {
       setStatus(s);
       if (prevConnected !== s.connected) {
@@ -40,14 +58,43 @@ function Shell() {
         prevConnected = s.connected;
       }
     });
-    const unConfig = onConfig((c: Config) => setShowUsername(c.ui.show_username));
+    const unConfig = onConfig(setConfigLocal);
+    const unUpdate = onUpdate(setUpdate);
+    const unProgress = onUpdateProgress(setProgress);
     return () => {
       un.then((f) => f());
       unConfig.then((f) => f());
+      unUpdate.then((f) => f());
+      unProgress.then((f) => f());
     };
   }, [log]);
 
+  const showUsername = config?.ui.show_username ?? true;
   const gated = !status.connected && view !== "switcher" && view !== "settings";
+  const showBanner =
+    update &&
+    update.version !== dismissed &&
+    update.version !== config?.updates.skipped_version;
+
+  function skipUpdate(info: UpdateInfo) {
+    if (!config) return;
+    const next = {
+      ...config,
+      updates: { ...config.updates, skipped_version: info.version },
+    };
+    setConfigLocal(next);
+    setConfig(next).catch((e) => log(`Failed to save config: ${e}`));
+  }
+
+  function install() {
+    setInstalling(true);
+    setProgress(null);
+
+    installUpdate().catch((e) => {
+      setInstalling(false);
+      log(`Update failed: ${e}`);
+    });
+  }
 
   return (
     <div className="flex h-screen flex-col">
@@ -56,6 +103,16 @@ function Shell() {
         <Sidebar active={view} onSelect={setView} />
         <div className="flex min-w-0 flex-1 flex-col">
           <StatusBar status={status} showUsername={showUsername} />
+          {showBanner && (
+            <UpdateBanner
+              info={update}
+              installing={installing}
+              progress={progress}
+              onInstall={install}
+              onSkip={() => skipUpdate(update)}
+              onDismiss={() => setDismissed(update.version)}
+            />
+          )}
           <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
             <div
               className={cn(
