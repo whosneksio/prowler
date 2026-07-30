@@ -1,8 +1,8 @@
 # Prowler
 
-![Prowler](https://i.ibb.co/WvLD9bpZ/image-2.png)
+![Prowler](https://i.ibb.co/vSLJDRZ/prowler.png)
 
-Prowler is a desktop tool for League of Legends built with Tauri and React, designed to enhance your pre-game and out-of-game experience with a suite of automation and customization features. Heavily inspired by: [Tiamat](https://github.com/369gabriel/tiamat)
+Prowler is a lightweight desktop tool for League of Legends built with Tauri and React, designed to enhance your experience in League of Legends client. Heavily inspired by: [Tiamat](https://github.com/369gabriel/tiamat)
 
 ## Features
 
