@@ -117,6 +117,7 @@ pub fn run() {
             modules::chat::set_chat_offline,
             modules::friends::count_friends,
             modules::friends::remove_all_friends,
+            modules::loot::claim_all_rewards,
             modules::runes::get_rune_trees,
             modules::runes::apply_rune_page,
             updater::check_update,

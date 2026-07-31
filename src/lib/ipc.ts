@@ -90,6 +90,10 @@ export function removeAllFriends(): Promise<number> {
   return invoke("remove_all_friends");
 }
 
+export function claimAllRewards(): Promise<number> {
+  return invoke("claim_all_rewards");
+}
+
 export function setAutomation(
   name: AutomationName,
   enabled: boolean,

@@ -7,6 +7,7 @@ pub mod dodge;
 pub mod friends;
 pub mod icons;
 pub mod loadout;
+pub mod loot;
 pub mod restart;
 pub mod reveal;
 pub mod runes;

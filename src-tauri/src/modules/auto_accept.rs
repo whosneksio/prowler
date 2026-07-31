@@ -21,9 +21,7 @@ pub async fn run(app: AppHandle, state: Arc<AppState>, token: CancellationToken)
         tokio::select! {
             _ = token.cancelled() => break,
             _ = tick.tick() => {
-                if !state.ws_live() {
-                    check(&app, &state, &token).await;
-                }
+                check(&app, &state, &token).await;
             }
             event = rx.recv() => {
                 if let Ok(e) = event {

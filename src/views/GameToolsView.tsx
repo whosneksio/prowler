@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, ViewHeader } from "../components/common";
 import { Button } from "@/components/ui/button";
-import { dodge, restartUx } from "../lib/ipc";
+import { claimAllRewards, dodge, restartUx } from "../lib/ipc";
 import { useLog } from "../lib/log";
 
 export function GameToolsView() {
@@ -45,6 +45,18 @@ export function GameToolsView() {
         >
           <Button size="sm" variant="destructive" disabled={busy !== null} onClick={() => run("dodge", dodge)}>
             {busy === "dodge" ? "Dodging…" : "Dodge champ select"}
+          </Button>
+        </Card>
+
+        <Card
+          title="Claim All Rewards"
+          desc="Claim event pass rewards, loot milestones, and pending level-up grants. Grants that need a manual pick are skipped."
+        >
+          <Button size="sm"
+            disabled={busy !== null}
+            onClick={() => run("claim", claimAllRewards)}
+          >
+            {busy === "claim" ? "Claiming…" : "Claim all rewards"}
           </Button>
         </Card>
 
