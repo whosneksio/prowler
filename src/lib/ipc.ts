@@ -131,6 +131,14 @@ export function onLog(cb: (line: string) => void): Promise<UnlistenFn> {
   return listen<string>("prowler://log", (e) => cb(e.payload));
 }
 
+export function quit(): Promise<void> {
+  return invoke("quit");
+}
+
+export function onCloseRequested(cb: () => void): Promise<UnlistenFn> {
+  return listen("prowler://close-requested", () => cb());
+}
+
 export function checkUpdate(): Promise<UpdateInfo | null> {
   return invoke("check_update");
 }

@@ -65,18 +65,36 @@ export function SettingsView() {
 
         <Card
           title="Window"
-          desc="Closing the window keeps Prowler running in the tray."
+          desc="What happens when you close the window."
         >
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-muted-foreground">
-              Close to tray
-            </span>
-            <Switch
-              checked={config.ui.close_to_tray}
-              onCheckedChange={(on) =>
-                save({ ...config, ui: { ...config.ui, close_to_tray: on } })
-              }
-            />
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm text-muted-foreground">
+                Ask before closing
+              </span>
+              <Switch
+                checked={config.ui.ask_on_close}
+                onCheckedChange={(on) =>
+                  save({ ...config, ui: { ...config.ui, ask_on_close: on } })
+                }
+              />
+            </div>
+            <div
+              className={`flex items-center justify-between gap-4 ${
+                config.ui.ask_on_close ? "opacity-50" : ""
+              }`}
+            >
+              <span className="text-sm text-muted-foreground">
+                Close to tray
+              </span>
+              <Switch
+                disabled={config.ui.ask_on_close}
+                checked={config.ui.close_to_tray}
+                onCheckedChange={(on) =>
+                  save({ ...config, ui: { ...config.ui, close_to_tray: on } })
+                }
+              />
+            </div>
           </div>
         </Card>
 

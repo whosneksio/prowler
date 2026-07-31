@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
 import { TitleBar } from "./components/TitleBar";
 import { LogFeed } from "./components/LogFeed";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { LogProvider, useLog } from "./lib/log";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   getConfig,
   getConnectionStatus,
   installUpdate,
+  onCloseRequested,
   onConfig,
   onStatus,
   onUpdate,
   onUpdateProgress,
+  quit,
   setConfig,
 } from "./lib/ipc";
 import type {
@@ -46,6 +50,7 @@ function Shell() {
   const [dismissed, setDismissed] = useState<string | null>(null);
   const [progress, setProgress] = useState<UpdateProgress | null>(null);
   const [installing, setInstalling] = useState(false);
+  const [closePrompt, setClosePrompt] = useState(false);
 
   useEffect(() => {
     let prevConnected: boolean | null = null;
@@ -62,11 +67,13 @@ function Shell() {
     const unConfig = onConfig(setConfigLocal);
     const unUpdate = onUpdate(setUpdate);
     const unProgress = onUpdateProgress(setProgress);
+    const unClose = onCloseRequested(() => setClosePrompt(true));
     return () => {
       un.then((f) => f());
       unConfig.then((f) => f());
       unUpdate.then((f) => f());
       unProgress.then((f) => f());
+      unClose.then((f) => f());
     };
   }, [log]);
 
@@ -97,6 +104,24 @@ function Shell() {
     });
   }
 
+  async function confirmClose(toTray: boolean, remember: boolean) {
+    setClosePrompt(false);
+    if (config && remember) {
+      const next = {
+        ...config,
+        ui: { ...config.ui, ask_on_close: false, close_to_tray: toTray },
+      };
+      setConfigLocal(next);
+      try {
+        await setConfig(next);
+      } catch (e) {
+        log(`Failed to save config: ${e}`);
+      }
+    }
+    if (toTray) getCurrentWindow().destroy().catch(() => {});
+    else quit().catch(() => {});
+  }
+
   function acceptRisk() {
     if (!config) return;
     const next = { ...config, ui: { ...config.ui, risk_accepted: true } };
@@ -109,6 +134,12 @@ function Shell() {
       <div className="flex h-screen flex-col">
         <TitleBar />
         <RiskGate onAccept={acceptRisk} />
+        {closePrompt && (
+          <ClosePrompt
+            onCancel={() => setClosePrompt(false)}
+            onConfirm={confirmClose}
+          />
+        )}
       </div>
     );
   }
@@ -153,6 +184,57 @@ function Shell() {
         </div>
       </div>
       <LogFeed />
+      {closePrompt && (
+        <ClosePrompt
+          onCancel={() => setClosePrompt(false)}
+          onConfirm={confirmClose}
+        />
+      )}
+    </div>
+  );
+}
+
+function ClosePrompt({
+  onCancel,
+  onConfirm,
+}: {
+  onCancel: () => void;
+  onConfirm: (toTray: boolean, remember: boolean) => void;
+}) {
+  const [remember, setRemember] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70">
+      <div className="grid w-80 gap-4 rounded-lg border border-edge bg-panel p-5 shadow-lg">
+        <div>
+          <p className="text-sm font-semibold">Close Prowler?</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Minimize to the tray to keep automations running, or quit
+            completely.
+          </p>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-muted-foreground">
+            Remember my choice
+          </span>
+          <Switch checked={remember} onCheckedChange={setRemember} />
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onConfirm(false, remember)}
+          >
+            Quit
+          </Button>
+          <Button size="sm" onClick={() => onConfirm(true, remember)}>
+            Minimize to tray
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

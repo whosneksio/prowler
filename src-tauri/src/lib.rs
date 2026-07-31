@@ -10,7 +10,7 @@ mod updater;
 
 use std::sync::Arc;
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 use crate::config::Config;
 use crate::state::AppState;
@@ -25,12 +25,15 @@ pub fn run() {
                 let app = window.app_handle();
                 let state = app.state::<Arc<AppState>>();
 
-                let close_to_tray = state
+                let (close_to_tray, ask_on_close) = state
                     .config
                     .try_read()
-                    .map(|c| c.ui.close_to_tray)
-                    .unwrap_or(true);
-                if close_to_tray {
+                    .map(|c| (c.ui.close_to_tray, c.ui.ask_on_close))
+                    .unwrap_or((true, true));
+                if ask_on_close {
+                    api.prevent_close();
+                    let _ = window.emit("prowler://close-requested", ());
+                } else if close_to_tray {
                     api.prevent_close();
                     let win = window.clone();
 
@@ -92,6 +95,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_connection_status,
+            commands::quit,
             commands::get_config,
             commands::set_config,
             commands::list_accounts,

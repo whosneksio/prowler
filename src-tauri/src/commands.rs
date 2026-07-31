@@ -91,6 +91,11 @@ pub async fn get_connection_status(
 }
 
 #[tauri::command]
+pub fn quit(app: AppHandle) {
+    app.exit(0);
+}
+
+#[tauri::command]
 pub async fn get_config(state: tauri::State<'_, Arc<AppState>>) -> Result<Config, String> {
     Ok(state.config.read().await.clone())
 }

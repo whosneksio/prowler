@@ -216,6 +216,7 @@ pub struct CustomRunesCfg {
 pub struct UiCfg {
     pub show_username: bool,
     pub close_to_tray: bool,
+    pub ask_on_close: bool,
     pub risk_accepted: bool,
 }
 
@@ -224,6 +225,7 @@ impl Default for UiCfg {
         Self {
             show_username: true,
             close_to_tray: true,
+            ask_on_close: true,
             risk_accepted: false,
         }
     }
@@ -391,5 +393,6 @@ mod tests {
         assert!(cfg.updates.auto_check);
         assert!(cfg.updates.skipped_version.is_none());
         assert!(cfg.ui.close_to_tray);
+        assert!(cfg.ui.ask_on_close);
     }
 }
