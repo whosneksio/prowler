@@ -7,6 +7,20 @@ Prowler is a lightweight desktop tool for League of Legends built with Tauri and
 > [!WARNING]
 > **Use at your own risk.** Prowler is not affiliated with, endorsed, or sponsored by Riot Games. Using third-party tools may violate Riot's Terms of Service and could result in penalties, including account bans. You are solely responsible for any consequences of using this software.
 
+> [!IMPORTANT]
+> **Official Riot Games response.** We are glad that you enjoy our game so much and you are trying to make a program that makes peoples playing time easier!
+> While we don’t strictly condemn the use of third-party modifications, these programs can be dangerous and worthy of suspension where they violate our Terms of Use. I can’t tell you whether a particular third-party modification is against our Terms of Use or not, but you can follow these general guidelines:
+> We identify and suspend accounts for using third-party programs intended to offer a competitive advantage by affecting gameplay in any way
+> We cannot control what a third-party developer makes or changes, so a program that was once acceptable may have versions which violate the Terms of Use
+> Some third-party developers may not have your best interests in mind, so please be aware that these types of files can contain keyloggers, viruses, and malware.
+> Third-party modifications may affect your game in unexpected ways, so if you’re having technical issues, try uninstalling these programs before doing anything else.
+> Regarding one point you mentioned: 'Profile Customization – client‑side changes to profile icon, background, status message, and challenge badges (visual changes on the client side only).'
+> if you mean custom customization that is not official, then this is definitely not allowed
+> In general, if you find a third-party modification suspicious, it’s best to avoid using it. I hope this clears things up a bit, but if you have any other questions, please let me know.
+> Alinas, Riot Games Player Support **IT IS NOT BANABLE**
+
+
+
 ## Features
 
 - **Account Switcher**: Securely save multiple Riot account sessions and switch between them with a single click. No more typing passwords.
